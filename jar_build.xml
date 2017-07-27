@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<project name="SOA_JAR" default="createjar">
+	 <property name="base.dir" location="." />
+	 <property name="work.space.dir" location="D:\\Housejoy\\MyGateBackendChallenge" />
+	<property name="jar.dir" value="${base.dir}/jar_files" />
+	<property name="lib.dir" value="${base.dir}/WEB-INF/lib" />
+	
+	<target name="createjar">
+
+			<echo>------------------------------------------------</echo>
+			<echo message="Cleaning jar_files Directory" />
+			<delete dir="${jar.dir}" failonerror="true" />
+
+			<echo message="Initializing jar" />
+			<mkdir dir="${jar.dir}" />
+
+			<echo>------------------------------------------------</echo>
+		<jar destfile="${jar.dir}/utils.jar" basedir="${work.space.dir}/UTILS/bin" />
+					<!--<jar destfile="${jar.dir}/routing.jar" basedir="${work.space.dir}/ROUTING/bin" />-->
+			<echo>------------------------------------------------</echo>
+
+			<echo message="Moving jars to WEB-INF Directory" />
+			<copy todir="${lib.dir}" overwrite="true">
+				<fileset dir="${jar.dir}/" includes="**" />
+			</copy>
+			<echo>------------------------------------------------</echo>
+		</target>
+	
+	
+	 
+</project>

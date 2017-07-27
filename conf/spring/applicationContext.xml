@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+http://www.springframework.org/schema/p
+http://www.springframework.org/schema/p/spring-context-2.5.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>master.properties</value>
+		</property>
+	</bean>
+	<bean id="sessionFactory"
+
+		class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<property name="configLocation">
+			<value>classpath:hibernate.cfg.xml</value>
+		</property>
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.show_sql">${SHOW_SQL}</prop>
+				<prop key="hibernate.jdbc.batch_size">50</prop>
+			</props>
+		</property>
+	</bean>
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref local="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName">
+			<value>java:comp/env/jdbc/mygate</value>
+		</property>
+	</bean>
+	<bean id="txProxyTemplate"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		abstract="true">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="transactionAttributes">
+			<props>
+				<prop key="*">PROPAGATION_SUPPORTS</prop>
+			</props>
+		</property>
+		<property name="proxyTargetClass">
+			<value>true</value>
+		</property>
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" />
+	
+	<!-- DATA ACCESS OBJECT BEANS -->
+	<bean id="mobileFoodFacilityPermitDAO" class="com.mygate.dal.dao.MobileFoodFacilityPermitDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<!-- DATA ACCESS OBJECT BEANS -->
+	
+	
+	
+	
+	<!-- IMPLEMENTATION OBJECT BEANS -->
+	<bean id="foodFacilitymGR" class="com.mygate.ce.impl.FoodFacilityImpl">
+		<property name="mobileFoodFacilityPermitDAO">
+			<ref bean="mobileFoodFacilityPermitDAO" />
+		</property>
+	</bean>
+	<!-- IMPLEMENTATION OBJECT BEANS -->
+	
+</beans>
+

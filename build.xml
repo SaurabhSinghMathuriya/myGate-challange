@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<project name="SOAV1.0" default="make-war">
+	<property name="work.space.dir" location="D:\\Housejoy\\MyGateBackendChallenge" />
+	<property name="base.dir" value="." />
+	<property file="${base.dir}/build.properties" />
+	<property name="src.dir" value="${base.dir}/src"/>
+	<property name="dist.dir" value="${base.dir}/dist" />
+	<property name="tomcat.home" value="${tomcat.home}/"/>
+	<property name="conf.dir" value="${base.dir}/conf" />
+	<property name="build.dir" value="${base.dir}/WEB-INF/classes" />
+	<property name="lib.dir" value="${base.dir}/WEB-INF/lib" />
+	<property name="metainf.dir" value="${base.dir}/WEB-INF/META-INF" />
+	<property name="deploy.dir" value="${tomcat.home}/webapps" />
+	<property name="war.dir" value="${deploy.dir}/soa" />
+	<property name="java-doc.dir" value="${base.dir}/javadoc" />
+	<property name="soa.dir" value="." />
+	<property name="jar.dir" value="${base.dir}/jar_files" />
+	<property file="${base.dir}/build_info.properties"/>
+	<property name="build.number" value="${build.major.number}.${build.minor.number}.${build.revision.number}"/>
+
+	<!-- Inject the user specific values in the build properties which injects to the properties Values-->
+	<filterset id="filters">
+		<filter token="VERSION" value="${VERSION}" />
+		<filter token="ENVIRONMENT" value="${ENVIRONMENT}" />	
+			
+		
+	</filterset>
+	<!-- End of user specific properties -->
+
+	<path id="libraries">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${tomcat.home}/lib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="rebuildThis" depends="clean" >
+	</target>
+
+	<target name="clean">
+		<echo>------------------------------------------------</echo>
+		<echo message="Cleaning build, dist and war directories"/>
+		<delete dir="${build.dir}" failonerror="true" />
+		<delete dir="${dist.dir}" failonerror="true" />
+		<delete dir="${war.dir}" failonerror="true" />
+		<delete file="${tomcat.home}/webapps/SOA.war"/>
+		<delete dir="${java-doc.dir}" failonerror="true"/>
+	</target>
+
+	<target name="init" depends="clean">
+		<echo message="Initializing build"/>
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${java-doc.dir}"/>
+		<mkdir dir="${lib.dir}" />
+	</target>
+     <target name="copy" depends="init">
+    <copy todir="${lib.dir}" failonerror="false">
+      <fileset dir="../libs">
+        <include name="**/*"/>
+      </fileset>
+    </copy>
+	<copy todir="${lib.dir}" failonerror="false">
+      <fileset dir="./jar_files">
+        <include name="**/*"/>
+      </fileset>
+    </copy>
+	<copy todir="${base.dir}/WEB-INF/" failonerror="false">
+      <fileset dir=".">
+        <include name="web.xml"/>
+      </fileset>
+    </copy>
+  </target>
+ <target name="compile" depends="copy">
+		<echo message="Compiling source directories"/>
+		<javac destdir="${build.dir}" classpathref="libraries" debug="true" verbose="false">
+			<src location="${src.dir}" />
+		</javac>
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="${conf.dir}/resources/" includes="**" />
+			<fileset dir="${conf.dir}/log4j/" includes="**" />
+			<fileset dir="${conf.dir}/spring/" includes="**" />
+			<filterset refid="filters"/>
+		</copy>
+	</target>
+
+	<target name="build-service-app" depends="compile" >
+		<echo message="Build service app completed..."/>
+		<echo>------------------------------------------------</echo>
+	</target>
+
+	<target name="build-service-app-with-jars" depends="createjar,compile" >
+		<echo message="Build service app completed..."/>
+		<echo>------------------------------------------------</echo>
+	</target>
+
+	<target name="createjar">
+
+		<echo>------------------------------------------------</echo>
+		<echo message="Cleaning jar_files Directory" />
+		<delete dir="${jar.dir}" failonerror="true" />
+
+		<echo message="Initializing jar" />
+		<mkdir dir="${jar.dir}" />
+
+		<echo>------------------------------------------------</echo>
+		<!--<jar destfile="${jar.dir}/redis.jar" basedir="${work.space.dir}/EX-Cache/bin" />-->
+		<echo>------------------------------------------------</echo>
+
+		<echo message="Moving jars to WEB-INF Directory" />
+		<copy todir="${lib.dir}" overwrite="true">
+			<fileset dir="${jar.dir}/" includes="**" />
+		</copy>
+		<echo>------------------------------------------------</echo>
+	</target>
+
+	<target name="incrementBuildNumber">
+		<ant antfile="${base.dir}/incBuildNumber.xml" target="revision"/>
+		<echo message="build number after new build: ${build.number} " />
+	</target>
+
+	<target name="make-war" depends="build-service-app,incrementBuildNumber">
+		<echo message="Creating war file and including necessary folders configured" />
+		<war warfile="${dist.dir}/SOA.${build.number}.war" basedir="${base.dir}" webxml="${base.dir}/WEB-INF/web.xml">
+			<include name="conf/**"/>
+			<include name="WEB-INF/**"/>
+			<include name="index.jsp"/>
+			<include name="build.properties"/>
+			<include name="master.properties"/>
+			<include name="build.xml"/>
+			<exclude name="dist"/>
+			<exclude name="${dist.dir}/SOA.war"/>
+			<exclude name=".settings"/>
+			<exclude name="**/.*"/>
+		</war>
+		<echo>------------------------------------------------</echo>
+	</target>
+
+	<target name="generate-javadoc" depends="init" description="generate documentation">
+		<echo message="Generating javadoc for ${src.dir}" />
+		<javadoc sourcepath="${src.dir}" destdir="${java-doc.dir}"/>
+	</target>
+
+	<target name="deploy" depends="make-war,generate-javadoc" description="Build and test War">
+		<echo message="Deploying war file to {deploy.dir}" />
+		<copy todir="${deploy.dir}">
+			<fileset dir="${dist.dir}"/>
+		</copy>
+		<echo>------------------------------------------------</echo>
+	</target>
+</project>
